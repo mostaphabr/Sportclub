@@ -4,7 +4,7 @@ A full-stack web platform to search local football terrains, reserve match slots
 
 [![tests](https://github.com/mostaphabr/Sportclub/actions/workflows/tests.yml/badge.svg)](https://github.com/mostaphabr/Sportclub/actions/workflows/tests.yml)
 
-Built with **Laravel 10** and **Bootstrap 5**.
+Built with **Laravel 12** and **Bootstrap 5**.
 
 | Terrains | Booking |
 | --- | --- |
@@ -83,6 +83,7 @@ Values you can set in `.env`:
 | `SPORTCLUB_MAX_HOURS_PER_DAY` | `2` | Hours a player can book per day (admins are not limited) |
 | `SPORTCLUB_CURRENCY` | `DH` | Currency shown next to prices |
 | `MAIL_MAILER` | `smtp` | Use `log` while developing: emails are written to `storage/logs/laravel.log` |
+| `APP_TIMEZONE` | `UTC` | Timezone for "tomorrow" bookings and dates, e.g. `Africa/Casablanca` |
 
 If the mail server is not configured, bookings still work: the error is logged and the page continues.
 
