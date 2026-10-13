@@ -76,67 +76,103 @@
     </div><!-- End Breadcrumbs -->
 
     <!-- ======= pitches Section ======= -->
-    <section id="blog" class="blog">
+    <section id="blog" class="blog pt-4">
         <div class="container" data-aos="fade-up">
+
+            {{-- Search & filters --}}
+            <form method="GET" action="{{ route('reservation.index') }}" class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-lg-3 col-md-6">
+                            <label for="q" class="form-label small text-muted mb-1">Name or city</label>
+                            <input type="search" id="q" name="q" value="{{ $filters['q'] }}" class="form-control" placeholder="e.g. Khemisset">
+                        </div>
+                        <div class="col-lg-2 col-md-6">
+                            <label for="size" class="form-label small text-muted mb-1">Size</label>
+                            <select id="size" name="size" class="form-select">
+                                <option value="">Any size</option>
+                                @foreach ($sizes as $size)
+                                    <option value="{{ $size }}" @selected($filters['size'] == $size)>{{ intdiv($size, 2) }} vs {{ intdiv($size, 2) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-4">
+                            <label for="hour" class="form-label small text-muted mb-1">Free tomorrow at</label>
+                            <select id="hour" name="hour" class="form-select">
+                                <option value="">Any time</option>
+                                @for ($h = 6; $h <= 23; $h++)
+                                    <option value="{{ $h }}" @selected($filters['hour'] === $h)>{{ sprintf('%02d:00', $h) }}</option>
+                                @endfor
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-4">
+                            <label for="max_price" class="form-label small text-muted mb-1">Max price / hour</label>
+                            <input type="number" min="0" id="max_price" name="max_price" value="{{ $filters['max_price'] }}" class="form-control" placeholder="{{ config('sportclub.currency') }}">
+                        </div>
+                        <div class="col-lg-2 col-md-4">
+                            <label for="sort" class="form-label small text-muted mb-1">Sort by</label>
+                            <select id="sort" name="sort" class="form-select">
+                                @foreach ($sorts as $value => $label)
+                                    <option value="{{ $value }}" @selected($filters['sort'] === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-lg-1 col-md-12 d-grid">
+                            <button type="submit" class="btn btn-info"><i class="bi bi-search"></i><span class="d-lg-none ms-1">Search</span></button>
+                        </div>
+                    </div>
+                    @if ($filters['q'] !== '' || $filters['size'] || $filters['hour'] !== null || $filters['max_price'] !== null)
+                        <div class="small mt-2">
+                            {{ $terrain->total() }} {{ \Illuminate\Support\Str::plural('terrain', $terrain->total()) }} found ·
+                            <a href="{{ route('reservation.index') }}">clear filters</a>
+                        </div>
+                    @endif
+                </div>
+            </form>
 
             <div class="row gy-4 posts-list">
 
-
-                @foreach ($terrain as $pitche)
-                @php
-                $capacity = $pitche->capacity / 2;
-                @endphp
-
+                @forelse ($terrain as $pitche)
                 <div class="col-lg-4 col-md-6">
-                    <a href={{ route('reservation.show', $pitche->name) }}>
-
-
-                        <div>
-                            <article>
-                                <div   class="post-img bg-success  d-flex   justify-content-center">
-                                    <img  style="height: 200px;" src="{{ $pitche->imageUrl() }}" alt=""
-                                        class="img-fluid w-100">
-                                </div>
-                                <p class="post-category">{{ $capacity . '  vs  ' . $capacity }}</p>
-                                <h2 class="title">
-                                    <a class="text-success">{{ $pitche->name }}</a>
-                                </h2>
-                                <span class="text-warning">rating : 9/10</span>
-                                {{-- For Admins  --}}
-
-
-                                @auth
-                                @if ($user_role == 'admin')
-                                <div class="mt-2">
-
-                                    <form action={{ route('AdminDashbord.destroy', $pitche->id) }} method='POST'>
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-outline-danger">delete</button>
-                                        <a class="btn btn-outline-primary"
-                                            href={{ route('AdminDashbord.edit', $pitche->id) }}>edit</a>
-                                    </form>
-
-
-                                </div>
-                                @endif
-
-                                @endauth
-
-
-                                {{-- For Admins  --}}
-
-
-                            </article>
+                    <article class="h-100 d-flex flex-column">
+                        <a href="{{ route('reservation.show', $pitche->name) }}" class="post-img bg-success d-flex justify-content-center">
+                            <img style="height: 200px; object-fit: cover" src="{{ $pitche->imageUrl() }}" alt="{{ $pitche->name }}" class="img-fluid w-100">
+                        </a>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <p class="post-category mb-0">{{ $pitche->formatLabel() }}</p>
+                            @if ($pitche->priceLabel())
+                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle fs-6">{{ $pitche->priceLabel() }}</span>
+                            @endif
                         </div>
-                    </a>
+                        <h2 class="title mt-2">
+                            <a href="{{ route('reservation.show', $pitche->name) }}" class="text-success">{{ $pitche->name }}</a>
+                        </h2>
+                        <div class="small text-muted mb-2"><i class="bi bi-geo-alt"></i> {{ $pitche->localisation }} · <i class="bi bi-clock"></i> {{ $pitche->openhours }}</div>
+                        @include('SportClub.partials.stars', ['rating' => $pitche->averageRating(), 'count' => $pitche->reviewsCount()])
 
+                        <div class="mt-auto pt-3 d-flex flex-wrap gap-2">
+                            <a href="{{ route('reservation.show', $pitche->name) }}" class="btn btn-sm btn-info">Book</a>
+
+                            {{-- For Admins --}}
+                            @auth
+                            @if ($user_role == 'admin')
+                                <a class="btn btn-sm btn-outline-primary" href="{{ route('AdminDashbord.edit', $pitche->id) }}">edit</a>
+                                <form action="{{ route('AdminDashbord.destroy', $pitche->id) }}" method="POST"
+                                    onsubmit="return confirm('Delete {{ addslashes($pitche->name) }}? Its reservations will be deleted too.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">delete</button>
+                                </form>
+                            @endif
+                            @endauth
+                        </div>
+                    </article>
                 </div>
-                @endforeach
-
-
-
-
+                @empty
+                <div class="col-12">
+                    <p class="alert alert-secondary">No terrain matches these filters. <a href="{{ route('reservation.index') }}">Show all terrains</a>.</p>
+                </div>
+                @endforelse
 
                 <div class="row mt-3">
                     <div class="col-lg-12 d-flex justify-content-center">
@@ -147,6 +183,7 @@
                 <!-- End pitches pagination -->
 
             </div>
+        </div>
     </section><!-- End pitches Section -->
 
 </main><!-- End #main -->

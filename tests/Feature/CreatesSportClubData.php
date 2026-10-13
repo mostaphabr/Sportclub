@@ -35,6 +35,7 @@ trait CreatesSportClubData
         $pitche->image = 'test.jpg';
         $pitche->localisation = 'Khemisset';
         $pitche->openhours = $attributes['openhours'] ?? '8:00-21:00';
+        $pitche->price_per_hour = $attributes['price_per_hour'] ?? null;
         $pitche->save();
 
         return $pitche;

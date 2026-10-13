@@ -40,6 +40,9 @@
                 <label for="capacity">capacity</label>
                 <input type="number" min="2" max="30" value="{{ old('capacity', $pitche->capacity) }}" class="form-control mb-2" id="capacity" name="capacity">
 
+                <label for="price_per_hour">price per hour ({{ config('sportclub.currency') }})</label>
+                <input type="number" min="0" value="{{ old('price_per_hour', $pitche->price_per_hour) }}" class="form-control mb-2" id="price_per_hour" name="price_per_hour" placeholder="leave empty if not set">
+
                 <label for="localisation">localisation</label>
                 <input type="text" value="{{ old('localisation', $pitche->localisation) }}" class="form-control mb-2" id="localisation" name="localisation">
 

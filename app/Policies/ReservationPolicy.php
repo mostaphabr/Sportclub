@@ -13,6 +13,18 @@ class ReservationPolicy
         return ! $user->isProvider();
     }
 
+    /** Ask to join someone else's match: players (and admins), not providers. */
+    public function join(User $user): bool
+    {
+        return ! $user->isProvider();
+    }
+
+    /** Change the number of teammates wanted: the booker, before the match starts. */
+    public function manageTeam(User $user, Reservation $reservation): bool
+    {
+        return (int) $user->id === (int) $reservation->user_id && $reservation->hasNotStarted();
+    }
+
     /**
      * Cancel a reservation:
      * - admin: any reservation

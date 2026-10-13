@@ -91,6 +91,9 @@
                         <li><a href={{ url('login') }} class="btn  p-1">login </a></li>
                         <li><a href={{ url('register') }} class="btn btn-info p-1">register </a></li>
                     @else
+                        @if (auth()->user()->role !== 'provider')
+                            <li><a href="{{ route('matches.index') }}">Find a match</a></li>
+                        @endif
                         <li><a href={{ route('posts.index') }}>Blog</a></li>
                         <li><a href={{ route('contact') }}>Contact</a></li>
                         <li><a href="{{ route('profile', auth()->user()) }}">Profile</a></li>

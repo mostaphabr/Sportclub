@@ -51,6 +51,14 @@ class User extends Authenticatable
         return $this->hasMany(Comment::class);
     }
 
+    public function reviews(){
+        return $this->hasMany(Review::class);
+    }
+
+    public function matchRequests(){
+        return $this->hasMany(MatchRequest::class);
+    }
+
     /** Profile picture URL (default avatar when there is none). */
     public function avatarUrl(): string
     {

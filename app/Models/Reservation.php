@@ -15,6 +15,8 @@ class Reservation extends Model
     protected $casts = [
         'debut' => 'integer',
         'fin' => 'integer',
+        'price' => 'integer',
+        'players_needed' => 'integer',
     ];
 
     /**
@@ -33,6 +35,57 @@ class Reservation extends Model
     }
     public function user(){
         return $this->belongsTo(User::class);
+    }
+
+    /** Players who asked to join this booking ("find teammates"). */
+    public function matchRequests(){
+        return $this->hasMany(MatchRequest::class);
+    }
+
+    /** How many players were accepted (uses withCount when loaded). */
+    public function acceptedCount(): int
+    {
+        if (isset($this->accepted_requests_count)) {
+            return (int) $this->accepted_requests_count;
+        }
+
+        return $this->relationLoaded('matchRequests')
+            ? $this->matchRequests->where('status', MatchRequest::ACCEPTED)->count()
+            : $this->matchRequests()->accepted()->count();
+    }
+
+    /** Open spots still free for teammates. */
+    public function spotsLeft(): int
+    {
+        return max(0, (int) $this->players_needed - $this->acceptedCount());
+    }
+
+    /** The match hasn't started yet. */
+    public function hasNotStarted(): bool
+    {
+        if (! $this->date) {
+            return false;
+        }
+
+        return $this->date->gt(today()) || ($this->date->isSameDay(today()) && $this->debut > (int) now()->format('G'));
+    }
+
+    /** The hour has been played (so the player can rate the pitch). */
+    public function hasBeenPlayed(): bool
+    {
+        if (! $this->date) {
+            return false;
+        }
+
+        return $this->date->lt(today()) || ($this->date->isSameDay(today()) && $this->fin <= (int) now()->format('G'));
+    }
+
+    /** Matches looking for players: not started, spots left. */
+    public function scopeOpenMatches(Builder $query): Builder
+    {
+        return $query->upcoming()
+            ->where('players_needed', '>', 0)
+            ->withCount(['matchRequests as accepted_requests_count' => fn ($q) => $q->accepted()]);
     }
 
     /** Reservations whose day of play is today or later. */

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
 use App\Models\User;
+use App\Notifications\WelcomeNotification;
+use App\Support\Notify;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -80,6 +82,8 @@ class RegisterController extends Controller
         // Create an empty profile for the user
         $profile = new Profile();
         $user->profile()->save($profile);
+
+        Notify::send($user, new WelcomeNotification());
 
         return $user;
     }

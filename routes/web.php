@@ -12,6 +12,8 @@ use App\Http\Controllers\MyReservationsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\MessageController as AdminMessageController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\MatchController;
+use App\Http\Controllers\ReviewController;
 
 /*
 |--------------------------------------------------------------------------
@@ -88,5 +90,17 @@ Route::put('/store', [ProfileController::class, 'store'])->name('profile.update'
 
 Route::resource('posts', PostController::class);
 Route::resource('comment', CommentController::class);
+
+// Find teammates
+Route::get('matches', [MatchController::class, 'index'])->name('matches.index');
+Route::post('matches/{reservation}/join', [MatchController::class, 'store'])->name('matches.join');
+Route::patch('match-requests/{matchRequest}/accept', [MatchController::class, 'accept'])->name('match-requests.accept');
+Route::patch('match-requests/{matchRequest}/decline', [MatchController::class, 'decline'])->name('match-requests.decline');
+Route::delete('match-requests/{matchRequest}', [MatchController::class, 'destroy'])->name('match-requests.destroy');
+Route::patch('reservation/{reservation}/team', [ReservationController::class, 'updateTeam'])->name('reservation.team');
+
+// Ratings & reviews
+Route::post('terrains/{pitche}/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+Route::delete('reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
 
 });

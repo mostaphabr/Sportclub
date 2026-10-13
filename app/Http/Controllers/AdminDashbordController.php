@@ -47,7 +47,17 @@ class AdminDashbordController extends Controller
             'comments' => Comment::count(),
             'reservations_next' => Reservation::whereDate('date', $playDay->toDateString())->count(),
             'reservations_upcoming' => Reservation::upcoming()->count(),
+            'revenue_month' => (int) Reservation::whereBetween('date', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])->sum('price'),
+            'bookings_month' => Reservation::whereBetween('date', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])->count(),
         ];
+
+        $topPitches = Pitche::query()
+            ->withSum(['reservations as revenue_month' => fn ($q) => $q->whereBetween('date', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])], 'price')
+            ->withCount(['reservations as bookings_month' => fn ($q) => $q->whereBetween('date', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])])
+            ->withAvg('reviews', 'rating')
+            ->orderByDesc('bookings_month')
+            ->take(5)
+            ->get();
 
         $pitches = Pitche::with('user')
             ->withCount(['reservations as upcoming_reservations_count' => fn ($query) => $query->upcoming()])
@@ -85,7 +95,7 @@ class AdminDashbordController extends Controller
 
         return view('SportClub/Dashbord', compact(
             'tab', 'search', 'playDay', 'providers', 'stats', 'pitches', 'users', 'posts', 'reservations',
-            'messages', 'unreadMessages'
+            'messages', 'unreadMessages', 'topPitches'
         ));
     }
 
@@ -103,9 +113,10 @@ class AdminDashbordController extends Controller
             'name' => 'required|string|max:255|unique:pitches,name',
             'provider' => 'required|integer|exists:users,id',
             'capacity' => 'required|integer|min:2|max:30',
+            'price_per_hour' => 'nullable|integer|min:0|max:100000',
             'localisation' => 'required|string|max:255',
             'openhours' => ['required', 'string', 'regex:/^\s*\d{1,2}\s*(?:[:hH]\s*\d{0,2})?\s*-\s*\d{1,2}\s*(?:[:hH]\s*\d{0,2})?\s*$/'],
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:6048'
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:6048'
         ], [
             'openhours.regex' => 'Open hours must look like 8:00-21:00.',
         ]);
@@ -118,6 +129,7 @@ class AdminDashbordController extends Controller
         $pitche->name = $validatedData['name'];
         $pitche->user_id = $validatedData['provider'];
         $pitche->capacity = $validatedData['capacity'];
+        $pitche->price_per_hour = $validatedData['price_per_hour'] ?? null;
         $pitche->localisation = $validatedData['localisation'];
         $pitche->openhours = $validatedData['openhours'];
         $pitche->image = $image_name;
@@ -149,9 +161,10 @@ class AdminDashbordController extends Controller
             'name' => 'required|string|max:255|unique:pitches,name,'.$pitche->id,
             'provider' => 'required|integer|exists:users,id',
             'capacity' => 'required|integer|min:2|max:30',
+            'price_per_hour' => 'nullable|integer|min:0|max:100000',
             'localisation' => 'nullable|string|max:255',
             'openhours' => ['nullable', 'string', 'regex:/^\s*\d{1,2}\s*(?:[:hH]\s*\d{0,2})?\s*-\s*\d{1,2}\s*(?:[:hH]\s*\d{0,2})?\s*$/'],
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,svg,webp|max:6048'
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:6048'
         ], [
             'openhours.regex' => 'Open hours must look like 8:00-21:00.',
         ]);
@@ -159,6 +172,7 @@ class AdminDashbordController extends Controller
         $pitche->name = trim($validatedData['name']);
         $pitche->user_id = $validatedData['provider'];
         $pitche->capacity = $validatedData['capacity'];
+        $pitche->price_per_hour = $validatedData['price_per_hour'] ?? null;
         if (! empty($validatedData['localisation'])) {
             $pitche->localisation = $validatedData['localisation'];
         }

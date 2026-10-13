@@ -3,11 +3,15 @@
 namespace App\Providers;
 
 use App\Models\Comment;
+use App\Models\MatchRequest;
 use App\Models\Post;
 use App\Models\Reservation;
+use App\Models\Review;
 use App\Policies\CommentPolicy;
+use App\Policies\MatchRequestPolicy;
 use App\Policies\PostPolicy;
 use App\Policies\ReservationPolicy;
+use App\Policies\ReviewPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -21,6 +25,8 @@ class AuthServiceProvider extends ServiceProvider
         Post::class => PostPolicy::class,
         Comment::class => CommentPolicy::class,
         Reservation::class => ReservationPolicy::class,
+        MatchRequest::class => MatchRequestPolicy::class,
+        Review::class => ReviewPolicy::class,
     ];
 
     /**

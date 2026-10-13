@@ -41,28 +41,28 @@
                 <div class="col-xl-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
                     <div class="icon-box">
                         <div class="icon"><i class="bi bi-easel"></i></div>
-                        <h4 class="title"><a href="" class="stretched-link">Real-Time Availability</a></h4>
+                        <h4 class="title"><a href="{{ route('reservation.index') }}" class="stretched-link">Real-Time Availability</a></h4>
                     </div>
                 </div><!--End Icon Box -->
 
                 <div class="col-xl-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
                     <div class="icon-box">
-                        <div class="icon"><i class="bi bi-gem"></i></div>
-                        <h4 class="title"><a href="" class="stretched-link">Secure Payments</a></h4>
+                        <div class="icon"><i class="bi bi-people"></i></div>
+                        <h4 class="title"><a href="{{ route('matches.index') }}" class="stretched-link">Find Teammates</a></h4>
                     </div>
                 </div><!--End Icon Box -->
 
                 <div class="col-xl-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
                     <div class="icon-box">
                         <div class="icon"><i class="bi bi-geo-alt"></i></div>
-                        <h4 class="title"><a href="" class="stretched-link">Khemisset , morocco</a></h4>
+                        <h4 class="title"><a href="{{ route('reservation.index', ['q' => 'Khemisset']) }}" class="stretched-link">Khemisset , morocco</a></h4>
                     </div>
                 </div><!--End Icon Box -->
 
                 <div class="col-xl-3 col-md-6" data-aos="fade-up" data-aos-delay="500">
                     <div class="icon-box">
-                        <div class="icon"><i class="bi bi-command"></i></div>
-                        <h4 class="title"><a href="" class="stretched-link">Field Variet</a></h4>
+                        <div class="icon"><i class="bi bi-star"></i></div>
+                        <h4 class="title"><a href="{{ route('reservation.index', ['sort' => 'rating']) }}" class="stretched-link">Rated by Players</a></h4>
                     </div>
                 </div><!--End Icon Box -->
 

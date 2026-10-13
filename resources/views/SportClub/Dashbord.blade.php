@@ -68,8 +68,9 @@
                     ['Terrains', $stats['pitches'], 'pitches on the platform', 'pitches'],
                     ['Bookings for '.$playDay->format('D d/m'), $stats['reservations_next'], $stats['reservations_upcoming'].' upcoming in total', 'reservations'],
                     ['Blog posts', $stats['posts'], $stats['comments'].' comments', 'posts'],
+                    ['Revenue '.now()->format('F'), number_format($stats['revenue_month'], 0, ',', ' ').' '.config('sportclub.currency'), $stats['bookings_month'].' bookings this month', 'reservations'],
                 ] as [$label, $value, $hint, $link])
-                    <div class="col-sm-6 col-lg-3">
+                    <div class="col-sm-6 col-lg">
                         <a href="{{ route('AdminDashbord.index', ['tab' => $link]) }}" class="text-decoration-none">
                             <div class="card h-100 shadow-sm">
                                 <div class="card-body">
@@ -82,6 +83,35 @@
                     </div>
                 @endforeach
             </div>
+
+            <h3 class="h5 mt-5">Terrains this month</h3>
+            @if ($topPitches->isEmpty())
+                <p class="text-muted">No terrains yet.</p>
+            @else
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Terrain</th>
+                                <th class="text-center">Bookings</th>
+                                <th class="text-end">Revenue</th>
+                                <th>Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($topPitches as $pitche)
+                                <tr>
+                                    <td><a href="{{ route('reservation.show', $pitche->name) }}">{{ $pitche->name }}</a></td>
+                                    <td class="text-center">{{ $pitche->bookings_month }}</td>
+                                    <td class="text-end">{{ number_format((int) $pitche->revenue_month, 0, ',', ' ') }} {{ config('sportclub.currency') }}</td>
+                                    <td>@include('SportClub.partials.stars', ['rating' => $pitche->averageRating()])</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <p class="small text-muted">Revenue = price of each booked hour this month (price saved at booking time).</p>
+            @endif
         @endif
 
         {{-- ============================================================ PITCHES --}}
@@ -99,6 +129,7 @@
                                         <th>Name</th>
                                         <th>Provider</th>
                                         <th>Format</th>
+                                        <th>Price</th>
                                         <th>Hours</th>
                                         <th class="text-center">Upcoming</th>
                                         <th></th>
@@ -109,7 +140,8 @@
                                         <tr>
                                             <td><a href="{{ route('reservation.show', $pitche->name) }}">{{ $pitche->name }}</a></td>
                                             <td>{{ optional($pitche->user)->name ?? '—' }}</td>
-                                            <td>{{ intdiv((int) $pitche->capacity, 2) }} vs {{ intdiv((int) $pitche->capacity, 2) }}</td>
+                                            <td>{{ $pitche->formatLabel() }}</td>
+                                            <td class="text-nowrap">{{ $pitche->price_per_hour !== null ? $pitche->price_per_hour.' '.config('sportclub.currency') : '—' }}</td>
                                             <td>{{ $pitche->openhours }}</td>
                                             <td class="text-center">{{ $pitche->upcoming_reservations_count }}</td>
                                             <td class="text-end text-nowrap">
@@ -164,6 +196,9 @@
 
                                 <label for="capacity" class="form-label">Capacity (players)</label>
                                 <input type="number" min="2" max="30" class="form-control mb-2" id="capacity" name="capacity" value="{{ old('capacity') }}" placeholder="e.g. 10 for 5 vs 5" required>
+
+                                <label for="price_per_hour" class="form-label">Price per hour ({{ config('sportclub.currency') }})</label>
+                                <input type="number" min="0" class="form-control mb-2" id="price_per_hour" name="price_per_hour" value="{{ old('price_per_hour') }}" placeholder="e.g. 150">
 
                                 <label for="localisation" class="form-label">Location</label>
                                 <input type="text" class="form-control mb-2" id="localisation" name="localisation" value="{{ old('localisation') }}" required>
