@@ -6,7 +6,7 @@ use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProfileAndPostsTest extends TestCase
@@ -42,6 +42,7 @@ class ProfileAndPostsTest extends TestCase
 
     public function test_profile_update_checks_email_and_replaces_the_picture(): void
     {
+        Storage::fake('public');
         $taken = $this->makeUser('user', ['email' => 'taken@example.com']);
         $user = $this->makeUser();
 
@@ -55,7 +56,7 @@ class ProfileAndPostsTest extends TestCase
         ])->assertSessionHasNoErrors();
 
         $first = $user->fresh()->profile->profile_picture;
-        $this->assertFileExists(public_path('images/profile/'.$first));
+        Storage::disk('public')->assertExists('profile/'.$first);
 
         $this->actingAs($user)->put('/store', [
             'name' => 'New Name', 'email' => $user->email, 'phone' => '0600000000',
@@ -64,11 +65,11 @@ class ProfileAndPostsTest extends TestCase
 
         $second = $user->fresh()->profile->profile_picture;
         $this->assertNotSame($first, $second);
-        $this->assertFileDoesNotExist(public_path('images/profile/'.$first), 'old picture is deleted');
+        Storage::disk('public')->assertMissing('profile/'.$first);
         $this->assertSame('New Name', $user->fresh()->name);
         $this->assertSame('0600000000', $user->fresh()->profile->phone_number);
 
-        File::delete(public_path('images/profile/'.$second));
+        Storage::disk('public')->assertExists('profile/'.$second);
     }
 
     public function test_author_edits_their_post_and_others_cannot(): void

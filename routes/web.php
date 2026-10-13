@@ -12,6 +12,7 @@ use App\Http\Controllers\MyReservationsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\MessageController as AdminMessageController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\MatchController;
 use App\Http\Controllers\ReviewController;
 
@@ -43,6 +44,11 @@ Route::get('blog-details', function () {
 
 
 
+
+// Uploaded images when `php artisan storage:link` hasn't been run (see App\Support\Uploads)
+Route::get('media/{folder}/{file}', [MediaController::class, 'show'])
+    ->where(['folder' => 'pitches|post|profile', 'file' => '[A-Za-z0-9._-]+'])
+    ->name('media');
 
 Route::get('contact', [ContactController::class, 'show'])->name('contact');
 Route::post('contact', [ContactController::class, 'store'])->middleware('throttle:5,1')->name('contact.store');

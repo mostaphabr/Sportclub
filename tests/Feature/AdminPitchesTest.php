@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\Pitche;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdminPitchesTest extends TestCase
@@ -14,6 +14,7 @@ class AdminPitchesTest extends TestCase
 
     public function test_admin_adds_and_edits_a_pitch(): void
     {
+        Storage::fake('public');
         $admin = $this->makeUser('admin');
         $provider = $this->makeUser('provider');
 
@@ -28,7 +29,7 @@ class AdminPitchesTest extends TestCase
 
         $pitch = Pitche::where('name', 'Stade Yasmine')->firstOrFail();
         $this->assertSame([9, 22], $pitch->openingRange());
-        $this->assertFileExists(public_path('images/pitches/'.$pitch->image));
+        Storage::disk('public')->assertExists('pitches/'.$pitch->image);
 
         $this->actingAs($admin)->get('/AdminDashbord/'.$pitch->id.'/edit')->assertOk();
         $this->actingAs($admin)->put('/AdminDashbord/'.$pitch->id, [
@@ -45,7 +46,7 @@ class AdminPitchesTest extends TestCase
 
         $this->actingAs($admin)->delete('/AdminDashbord/'.$pitch->id)->assertRedirect();
         $this->assertDatabaseMissing('pitches', ['id' => $pitch->id]);
-        $this->assertFileDoesNotExist(public_path('images/pitches/'.$pitch->image));
+        Storage::disk('public')->assertMissing('pitches/'.$pitch->image);
     }
 
     public function test_pitch_form_validation(): void

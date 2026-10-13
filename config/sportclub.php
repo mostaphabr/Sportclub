@@ -17,4 +17,8 @@ return [
     // Currency shown next to prices.
     'currency' => env('SPORTCLUB_CURRENCY', 'DH'),
 
+    // Where uploads were saved before they moved to storage/app/public
+    // (read by App\Support\Uploads and `php artisan sportclub:move-uploads`).
+    'legacy_uploads_path' => public_path('images'),
+
 ];
