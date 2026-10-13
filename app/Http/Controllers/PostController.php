@@ -15,7 +15,7 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::with('user')->paginate(3);
+        $posts = Post::with('user.profile')->latest()->paginate(3);
         return view('SportClub.blog',compact('posts'));
     }
 
@@ -63,7 +63,7 @@ class PostController extends Controller
      */
     public function show( $id)
     {
-        $post = Post::find($id);
+        $post = Post::with(['user.profile', 'comments.user'])->findOrFail($id);
         
         return view('SportClub/blog-details' , compact('post'));
 
@@ -90,6 +90,26 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
-        //
+        // Admins can remove any post (moderation); authors can remove their own.
+        $this->authorize('delete', $post);
+
+        $imagePath = public_path('images/post/'.$post->image);
+        if ($post->image && File::exists($imagePath)) {
+            File::delete($imagePath);
+        }
+
+        $title = $post->title;
+        $post->delete(); // comments are removed too (cascade)
+
+        $message = (int) auth()->id() === (int) $post->user_id
+            ? 'Your post "'.$title.'" has been deleted.'
+            : 'The post "'.$title.'" has been removed.';
+
+        // Coming from the post page itself? That page no longer exists, so go to the blog.
+        if (url()->previous() === route('posts.show', $post->id)) {
+            return redirect()->route('posts.index')->with('message', $message);
+        }
+
+        return back()->with('message', $message);
     }
 }

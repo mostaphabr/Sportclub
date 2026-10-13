@@ -28,7 +28,7 @@
                                 <i class="bi bi-envelope flex-shrink-0"></i>
                                 <div>
                                     <h4>Email:</h4>
-                                    <p>{{$pitche->user->email}}</p>
+                                    <p>{{ optional($pitche->user)->email }}</p>
                                 </div>
                             </div><!-- End Info Item -->
 
@@ -36,7 +36,7 @@
                                 <i class="bi bi-phone flex-shrink-0"></i>
                                 <div>
                                     <h4>Call:</h4>
-                                    <p>{{$pitche->user->profile->phone_number}}</p>
+                                    <p>{{ optional(optional($pitche->user)->profile)->phone_number ?? '—' }}</p>
                                 </div>
                             </div><!-- End Info Item -->
 
@@ -68,25 +68,41 @@
                                 @endif
 
                             </div>
-                            <div class="input-group mb-5 ">
-                                <label class="input-group-text text-success fs-3 " for="inputGroupSelect02">disponible hours</label>
-                                <select class="form-select fs-3" id="inputGroupSelect02" name='hour'>
-                                    <option selected disabled>Choose an hour</option>
+                            <div class="alert alert-info d-flex align-items-center gap-2 mb-4">
+                                <i class="bi bi-calendar-event fs-4"></i>
+                                <div>Bookings are for <strong>tomorrow, {{ $playDay->format('l d/m/Y') }}</strong>. Each slot is one hour.</div>
+                            </div>
 
-                                        @foreach ($disponible as $item)
-                                            <option value="{{ $item['debut'] }}-{{ $item['fin'] }}">
-                                                {{ $item['debut'] }} - {{ $item['fin'] }}
+                            <div class="input-group mb-3 ">
+                                <label class="input-group-text text-success fs-3 " for="inputGroupSelect02">disponible hours</label>
+                                <select class="form-select fs-3" id="inputGroupSelect02" name='hour' required>
+                                    <option value="" selected disabled>Choose an hour</option>
+
+                                        @foreach ($slots as $item)
+                                            @php $value = $item['debut'].'-'.$item['fin']; @endphp
+                                            <option value="{{ $value }}" @disabled($item['taken']) @selected(old('hour') === $value && ! $item['taken'])>
+                                                {{ sprintf('%02d:00', $item['debut']) }} - {{ sprintf('%02d:00', $item['fin']) }}{{ $item['taken'] ? '  (booked)' : '' }}
                                             </option>
                                         @endforeach
                                     
                                 </select>
                                
                             </div>
+                            <p class="text-muted mb-4">{{ count($disponible) }} of {{ count($slots) }} hours still free for tomorrow.</p>
                            @error('hour')
                            <p class="alert alert-warning">  {{$message}}</p>
                             @enderror
+                           @error('pitche_id')
+                           <p class="alert alert-warning">  {{$message}}</p>
+                            @enderror
                           
-                            <div class="text-center"><button type="submit" class="btn btn-info btn-lg ">reserve</button></div>
+                            @if (auth()->user()->cannot('create', App\Models\Reservation::class))
+                                <p class="alert alert-secondary text-center">Provider accounts manage terrains and can't book them.</p>
+                            @elseif (count($disponible) > 0)
+                                <div class="text-center"><button type="submit" class="btn btn-info btn-lg ">reserve</button></div>
+                            @else
+                                <p class="alert alert-secondary text-center">This terrain is fully booked for tomorrow. Try another terrain.</p>
+                            @endif
                         </form>
                     </div><!-- End Contact Form -->
 

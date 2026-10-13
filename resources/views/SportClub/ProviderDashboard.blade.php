@@ -29,7 +29,7 @@
 
                         <div class="carousel-caption d-none d-md-block text-light">
                             <h3>{{ $pitche->name }}</h3>
-                            <p class="text-warning fw-bold">reservation count : <span>{{ count($pitche->reservations) }}</span></p>
+                            <p class="text-warning fw-bold">upcoming reservations : <span>{{ $pitche->upcoming_reservations_count }}</span> · total : <span>{{ $pitche->reservations_count }}</span></p>
                         </div>
                     </a>
                 </div>

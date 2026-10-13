@@ -112,6 +112,15 @@
                                 <a href="{{route('posts.show' , $post->id)}}">{{$post->title}}</a>
                             </h2>
 
+                            @can('delete', $post)
+                                <form action="{{ route('posts.destroy', $post) }}" method="POST"
+                                    onsubmit="return confirm('Delete this post and its comments?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>
+                                </form>
+                            @endcan
+
                            
 
                         </article>

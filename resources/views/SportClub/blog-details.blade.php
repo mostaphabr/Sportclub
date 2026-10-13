@@ -71,6 +71,17 @@
 
                             </div><!-- End post content -->
 
+                            @can('delete', $post)
+                                <form action="{{ route('posts.destroy', $post) }}" method="POST" class="mt-3"
+                                    onsubmit="return confirm('Delete this post and its comments?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-outline-danger">
+                                        <i class="bi bi-trash"></i> {{ auth()->id() == $post->user_id ? 'Delete my post' : 'Remove post (admin)' }}
+                                    </button>
+                                </form>
+                            @endcan
+
 
 
                         </article><!-- End blog post -->
@@ -79,6 +90,10 @@
                     </div>
                     <div class="col-lg-6">
                         <div class="comments">
+
+                            @if (session('message'))
+                                <div class="alert alert-success">{{ session('message') }}</div>
+                            @endif
 
                             <h4 class="comments-count">{{ count($post->comments) }} Comments</h4>
 
@@ -93,6 +108,14 @@
                                                 <p>
                                                     {{ $comment->content }}
                                                 </p>
+                                                @can('delete', $comment)
+                                                    <form action="{{ route('comment.destroy', $comment) }}" method="POST"
+                                                        onsubmit="return confirm('Delete this comment?');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0">delete</button>
+                                                    </form>
+                                                @endcan
                                             </div>
                                         </div>
                                     </div>

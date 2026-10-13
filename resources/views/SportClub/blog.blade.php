@@ -12,6 +12,10 @@
                         <div class="col-lg-8 text-center">
                             <h2 class="text-warning">Blog</h2>
 
+                            @if (session('message'))
+                                <div class="alert alert-success text-dark">{{ session('message') }}</div>
+                            @endif
+
                             @if ($errors->any())
 
                                 <div class="alert alert-danger">
@@ -123,6 +127,17 @@
                                             </p>
                                         </div>
                                     </div>
+
+                                    @can('delete', $post)
+                                        <form action="{{ route('posts.destroy', $post) }}" method="POST" class="mt-3"
+                                            onsubmit="return confirm('Delete this post and its comments?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i> {{ auth()->id() == $post->user_id ? 'Delete' : 'Remove (admin)' }}
+                                            </button>
+                                        </form>
+                                    @endcan
 
                                 </article>
                             </div><!-- End post list item -->

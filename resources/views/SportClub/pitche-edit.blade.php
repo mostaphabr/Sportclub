@@ -1,8 +1,9 @@
 @extends('SportClub.layouts.parts')
 
 @section('content')
-    <div class="container   my-5  border border-2  rounded">
-        <div class="p-5 ">
+    <div class="container my-5 border border-2 rounded">
+        <div class="p-5">
+            <a href="{{ route('AdminDashbord.index', ['tab' => 'pitches']) }}" class="small">&larr; Back to dashboard</a>
             <h1>Admin dashbord</h1>
 
             @if ($errors->any())
@@ -16,22 +17,18 @@
                 </div>
             @endif
             <h3 class="text-warning">edit terrain</h3>
-            <form action={{ route('AdminDashbord.update' , $pitche->id) }} method="POST" enctype="multipart/form-data">
+            <form action="{{ route('AdminDashbord.update', $pitche->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <label for="name">name</label>
-                <input type="text" class="form-control mb-2" id="name" value="{{$pitche->name}} "name="name">
+                <input type="text" class="form-control mb-2" id="name" value="{{ old('name', $pitche->name) }}" name="name" required>
 
                 <label for="provider">provider</label>
                 @if (count($providers) > 0)
                     <select name="provider" id="provider" class="form-select">
-                        <option class="bg-info"  disabled>select provider</option>
+                        <option class="bg-info" disabled>select provider</option>
                         @foreach ($providers as $provider)
-                        @if ($provider->id == $pitche->user_id)
-                        <option value={{ $provider->id }} selected> {{ $provider->name }} </option>
-                        @else
-                            <option value="{{ $provider->id }}"> {{ $provider->name }} </option>
-                            @endif
+                            <option value="{{ $provider->id }}" @selected(old('provider', $pitche->user_id) == $provider->id)> {{ $provider->name }} </option>
                         @endforeach
                     </select>
                     <br>
@@ -41,15 +38,21 @@
 
 
                 <label for="capacity">capacity</label>
-                <input type="text"  value={{$pitche->capacity}} class="form-control mb-2" id="capacity" name="capacity">
+                <input type="number" min="2" max="30" value="{{ old('capacity', $pitche->capacity) }}" class="form-control mb-2" id="capacity" name="capacity">
 
-                <label for="image">image</label>
-                <input type="file" class="form-control mb-4" id="image" name="image">
-                <input type="submit" class="btn btn-info"></input>
+                <label for="localisation">localisation</label>
+                <input type="text" value="{{ old('localisation', $pitche->localisation) }}" class="form-control mb-2" id="localisation" name="localisation">
+
+                <label for="openhours">openhours</label>
+                <input type="text" placeholder="example : 8:00-21:00" value="{{ old('openhours', $pitche->openhours) }}" class="form-control mb-2" id="openhours" name="openhours">
+
+                <label for="image">image (leave empty to keep the current one)</label>
+                <input type="file" class="form-control mb-4" id="image" name="image" accept="image/*">
+                <input type="submit" class="btn btn-info" value="Save">
             </form>
         </div>
 
     </div>
 @endsection
 
-@section('terrain', 'pitche-edit')
+@section('title', 'pitche-edit')

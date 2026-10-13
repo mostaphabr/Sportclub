@@ -30,7 +30,8 @@ class CommentController extends Controller
     {
         $comment =new Comment ;
         $validatedData = $request->validate([
-            'comment' => 'required',
+            'comment' => 'required|string|max:2000',
+            'id' => 'required|integer|exists:posts,id',
         ]) ;
         $comment->user_id = Auth::id();
         $comment->post_id = $request->id ;
@@ -69,6 +70,11 @@ class CommentController extends Controller
      */
     public function destroy(Comment $comment)
     {
-        //
+        // Admins can remove any comment; authors can remove their own.
+        $this->authorize('delete', $comment);
+
+        $comment->delete();
+
+        return back()->with('message', 'The comment has been deleted.');
     }
 }

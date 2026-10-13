@@ -2,24 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Pitche;
 use App\Models\Reservation;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ReservationController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-
     public function __construct() {
         $this->middleware('auth')->except('index') ;
-    } 
+    }
 
+    /**
+     * Bookings are always for the next day ("tomorrow only").
+     */
+    public static function playDay(): Carbon
+    {
+        return today()->addDay();
+    }
 
     public function index()
     {
@@ -30,119 +33,122 @@ class ReservationController extends Controller
         if(Auth::check()){
                $user_role = auth()->user()->role ;
         }
-     
+
         return view('SportClub/pitches', compact('terrain' , 'user_role' ,'routeName'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
+        return redirect()->route('reservation.index');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Book one hour on a pitch for tomorrow.
      */
     public function store(Request $request)
     {
-        
-        $request->validate([
-            'pitche_id' => 'required' ,
-            'hour' => 'required' 
+        $this->authorize('create', Reservation::class);
+
+        $validated = $request->validate([
+            'pitche_id' => ['required', 'integer', 'exists:pitches,id'],
+            'hour' => ['required', 'regex:/^\d{1,2}-\d{1,2}$/'],
+        ], [
+            'hour.required' => 'Please choose an hour.',
+            'hour.regex' => 'Please choose an hour from the list.',
         ]);
 
-        $reservation = new Reservation() ;
+        $pitche = Pitche::findOrFail($validated['pitche_id']);
+        [$debut, $fin] = array_map('intval', explode('-', $validated['hour']));
+        $date = self::playDay()->toDateString();
 
-        $user = auth()->user() ;
+        // The hour must be one of this pitch's opening slots.
+        if (! in_array(['debut' => $debut, 'fin' => $fin], $pitche->slots(), true)) {
+            return back()->withErrors(['hour' => 'This hour is outside the opening hours of this pitch.'])->withInput();
+        }
 
-        $reservation->user_id = $user->id ;
-        $reservation->pitche_id = $request->pitche_id ;
+        if ($this->isTaken($pitche->id, $date, $debut)) {
+            return back()->withErrors(['hour' => 'Sorry, this hour was just booked by someone else. Please choose another one.'])->withInput();
+        }
 
-        $hours =  explode( '-',$request->hour ) ;
+        $reservation = new Reservation();
+        $reservation->user_id = $request->user()->id;
+        $reservation->pitche_id = $pitche->id;
+        $reservation->date = $date;
+        $reservation->debut = $debut;
+        $reservation->fin = $fin;
 
-       
-        $reservation->debut = $hours[0] ;
-        $reservation->fin =$hours[1];
-        $reservation->save();
-       
-        return redirect()->route('reservation.index')->with('message' , 'Your reservation has been successfully confirmed. We look forward to welcoming you!');
-       
+        try {
+            $reservation->save();
+        } catch (QueryException $e) {
+            // Two people pressed "reserve" at the same moment: the unique index stops the second one.
+            if ($this->isTaken($pitche->id, $date, $debut)) {
+                return back()->withErrors(['hour' => 'Sorry, this hour was just booked by someone else. Please choose another one.'])->withInput();
+            }
+            throw $e;
+        }
+
+        return redirect()->route('reservation.index')->with(
+            'message',
+            'Your reservation at '.$pitche->name.' on '.self::playDay()->format('l d/m').' from '
+            .$reservation->timeRange().' is confirmed. We look forward to welcoming you!'
+        );
     }
 
     /**
-     * Display the specified resource.
+     * Booking page for one pitch: shows tomorrow's hours, free and booked.
      */
     public function show(string $name)
     {
-        $calendrier = [
-            ['debut' => 8, 'fin' => 9],
-            ['debut' => 9, 'fin' => 10],
-            ['debut' => 10, 'fin' => 11],
-            ['debut' => 11, 'fin' => 12],
-            ['debut' => 12, 'fin' => 13],
-            ['debut' => 13, 'fin' => 14],
-            ['debut' => 14, 'fin' => 15],
-            ['debut' => 15, 'fin' => 16],
-            ['debut' => 16, 'fin' => 17],
-            ['debut' => 17, 'fin' => 18],
-            ['debut' => 18, 'fin' => 19],
-            ['debut' => 19, 'fin' => 20],
-        ];
-        
-        
-
-        
-        $pitche = Pitche::where('name', $name)->firstOrFail();
+        $pitche = Pitche::where('name', $name)->with('user.profile')->firstOrFail();
         $routeName = Route::currentRouteName();
+        $playDay = self::playDay();
 
+        $taken = $pitche->reservations()
+            ->whereDate('date', $playDay->toDateString())
+            ->pluck('debut')
+            ->map(fn ($hour) => (int) $hour)
+            ->all();
 
-        $in_reservation = $pitche->reservations->select('debut', 'fin')->toArray();
-        
-        // Convert multidimensional arrays to simple arrays of string representations
-        $calendrier_flat = array_map('serialize', $calendrier);
-        $in_reservation_flat = array_map('serialize', $in_reservation);
+        $slots = array_map(fn ($slot) => $slot + ['taken' => in_array($slot['debut'], $taken, true)], $pitche->slots());
 
-        // Find the difference
-        $disponible_flat = array_diff($calendrier_flat, $in_reservation_flat);
+        $disponible = array_values(array_filter($slots, fn ($slot) => ! $slot['taken']));
 
-        // Convert the result back to multidimensional arrays
-        $disponible = array_map('unserialize', $disponible_flat);
-            
-
-
-      
-        
-        
-        
-       
-
-
-        return view('SportClub/reservation', ['pitche' => $pitche, 'disponible' => $disponible ,'routeName'=>$routeName ]);
-        // return view('SportClub/reservation', ['field' => $name , 'reservations' => $in_reservation ]);
+        return view('SportClub/reservation', [
+            'pitche' => $pitche,
+            'slots' => $slots,
+            'disponible' => $disponible,
+            'playDay' => $playDay,
+            'routeName' => $routeName,
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
-        //
+        abort(404);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
-        //
+        abort(404);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Cancel a reservation (player, the pitch's provider, or an admin).
      */
-    public function destroy(string $id)
+    public function destroy(Reservation $reservation)
     {
-       
+        $this->authorize('delete', $reservation);
+
+        $reservation->delete();
+
+        return back()->with('message', 'The reservation has been cancelled.');
+    }
+
+    private function isTaken(int $pitcheId, string $date, int $debut): bool
+    {
+        return Reservation::where('pitche_id', $pitcheId)
+            ->whereDate('date', $date)
+            ->where('debut', $debut)
+            ->exists();
     }
 }

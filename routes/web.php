@@ -1,8 +1,6 @@
 <?php
 
 use App\Models\Post;
-use App\Models\User;
-use App\Models\Pitche;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PostController;
@@ -11,7 +9,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\AdminDashbordController;
 use App\Http\Controllers\MyReservationsController;
-use GuzzleHttp\Middleware;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,7 +34,7 @@ Auth::routes();
 
 
 Route::get('blog-details', function () {
-    return view('SportClub/blog-details');
+    return redirect()->route('posts.index');
 })->name('blog-details');
 
 
@@ -48,17 +46,31 @@ Route::get('contact', function () {
 
 
 
+// Pitches list (public) + booking / cancelling (logged-in, see ReservationController)
 Route::resource('reservation', ReservationController::class);
 
 
-Route::resource('AdminDashbord', AdminDashbordController::class)->middleware('auth');
+// ---------------------------------------------------------------- Admin only
+Route::middleware(['auth', 'admin'])->group(function () {
 
+    // Dashboard (tabs) + pitches management
+    Route::resource('AdminDashbord', AdminDashbordController::class);
 
-
-Route::get('ProviderDashboard', [MyReservationsController::class, 'ProviderDashboard'])->name('ProviderDashboard');
+    // Users management
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::post('users', [AdminUserController::class, 'store'])->name('users.store');
+        Route::patch('users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.role');
+        Route::patch('users/{user}/password', [AdminUserController::class, 'resetPassword'])->name('users.password');
+        Route::delete('users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+    });
+});
 // ------------------------------------------------------------------------------------
 
+
+
 Route::controller(MyReservationsController::class)->middleware('auth')->group(function () {
+    // Provider
+    Route::get('ProviderDashboard', 'ProviderDashboard')->name('ProviderDashboard');
     Route::get('MyTerrainReservations/{id}',  'MyTerrainReservations')->name('MyTerrainReservations');
 
     // ------------------------------------------------------------------------------------
