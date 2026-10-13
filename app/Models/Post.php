@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Support\Uploads;
 use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
@@ -15,5 +16,11 @@ class Post extends Model
 
     public function comments(){
         return $this->hasMany(Comment::class);
+    }
+
+    /** URL of the post image. */
+    public function imageUrl(): ?string
+    {
+        return Uploads::url('post', $this->image);
     }
 }

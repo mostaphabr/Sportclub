@@ -11,8 +11,8 @@
     <meta content="" name="keywords">
 
     <!-- Favicons -->
-    <link href="assets/img/sportclub-icon.png" rel="icon">
-    <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+    <link href="{{ asset('SportClub/assets/img/sportclub-icon.png') }}" rel="icon">
+    <link href="{{ asset('SportClub/assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +29,7 @@
     <link href={{ url('SportClub/assets/vendor/swiper/swiper-bundle.min.css') }} rel="stylesheet">
 
     <!-- Template Main CSS File -->
-    <link href={{ url('Sportclub/assets/css/main.css') }} rel="stylesheet">
+    <link href="{{ asset('SportClub/assets/css/main.css') }}" rel="stylesheet">
 
     <!-- =======================================================
   * Template Name: Impact
@@ -93,6 +93,7 @@
                     @else
                         <li><a href={{ route('posts.index') }}>Blog</a></li>
                         <li><a href={{ route('contact') }}>Contact</a></li>
+                        <li><a href="{{ route('profile', auth()->user()) }}">Profile</a></li>
                         @if (Auth::user()->role === 'user')
                             <li><a href={{ route('MyReservations') }}> My Reservations </a></i></li>
                         @endif
@@ -147,7 +148,7 @@
         <div class="container">
             <div class="row gy-4">
                 <div class="col-lg-5 col-md-12 footer-info">
-                    <a href="index.html" class="logo d-flex align-items-center">
+                    <a href="{{ route('home') }}" class="logo d-flex align-items-center">
                         <span>sportclub</span>
                     </a>
 

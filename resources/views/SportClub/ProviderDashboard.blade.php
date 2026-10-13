@@ -21,7 +21,7 @@
                 @foreach ($pitches as $index => $pitche)
                 <div class="carousel-item {{ $index == 0 ? 'active' : '' }}" data-bs-interval="10000">
                     <a href="{{route('MyTerrainReservations', ['id' => $pitche->id]) }}">
-                        <img src="{{ asset('images/pitches/' . $pitche->image) }}" class="d-block w-100 w-100  "
+                        <img src="{{ $pitche->imageUrl() }}" class="d-block w-100 w-100  "
                             alt="terrain-image">
                         <div class="carousel-caption">
 

@@ -10,19 +10,8 @@
                 <div class="container position-relative">
                     <div class="row d-flex justify-content-center">
                         <div class="col-lg-8 text-center">
-                            @if ($profile->profile_picture)
-                        
-                        
-                            
-                                <img class="rounded-circle" style="width: 250px ; height:250px"
-                                    src={{ asset('images/profile/' . $profile->profile_picture) }}
-                                    alt="">
-                           
-                        @else
-                          
-                                <img class="rounded-circle" style="width: 150px ; height:150px"
-                                    src={{ asset('images/profile/Default.jpg') }}>
-                        @endif
+                                <img class="rounded-circle" style="width: 200px; height: 200px; object-fit: cover"
+                                    src="{{ $profile->pictureUrl() }}" alt="{{ $profile->user->name }}">
                                 <h1 class="text-warning fw-light text-capitalize">{{$profile->user->name}}</h1>
                         </div>
                     </div>
@@ -35,6 +24,10 @@
         <div class="container   my-5  border border-2  rounded">
             <div class="p-5 ">
                 <h1>Profile informations</h1>
+
+                @if (session('message'))
+                    <div class="alert alert-success">{{ session('message') }}</div>
+                @endif
     
                 @if ($errors->any())
                     <div class="alert alert-danger">
@@ -48,21 +41,21 @@
                 @endif
                 
                 @if ($profile->user->id == Auth::id())
-                     <form action="/store" method="POST" enctype="multipart/form-data">
+                     <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <label for="name">name</label>
-                    <input type="text" value="{{$profile->user->name}}" class="form-control mb-2" id="name" name="name">
+                    <input type="text" value="{{ old('name', $profile->user->name) }}" class="form-control mb-2" id="name" name="name" required>
 
                     <label for="bio">bio </label>
-                    <textarea type="text"   class="form-control mb-2" id="bio" name="bio">{{$profile->Bio}}</textarea>
+                    <textarea class="form-control mb-2" id="bio" name="bio" maxlength="1000">{{ old('bio', $profile->Bio) }}</textarea>
                     <label for="phone">phone</label>
-                    <input type="phone" value="{{$profile->phone_number}}" class="form-control mb-2" id="phone" name="phone">
+                    <input type="tel" value="{{ old('phone', $profile->phone_number) }}" class="form-control mb-2" id="phone" name="phone" maxlength="20">
                     <label for="email">email</label>
-                    <input type="email" value="{{$profile->user->email}}" class="form-control mb-2" id="email" name="email">
+                    <input type="email" value="{{ old('email', $profile->user->email) }}" class="form-control mb-2" id="email" name="email" required>
 
                     <label for="image">image</label>
-                    <input type="file" class="form-control mb-2" id="image" name="image">
+                    <input type="file" class="form-control mb-2" id="image" name="image" accept="image/*">
     
                     <input type="submit" value="edit" class="btn btn-info"></input>
                 </form>
@@ -103,7 +96,7 @@
                         <article>
 
                             <div class="post-img">
-                                <img src={{ asset('images/post/' . $post->image) }} alt="post-image" class="img-fluid">
+                                <img src="{{ $post->imageUrl() }}" alt="post-image" class="img-fluid">
                             </div>
 
                            

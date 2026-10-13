@@ -10,6 +10,8 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\AdminDashbordController;
 use App\Http\Controllers\MyReservationsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\MessageController as AdminMessageController;
+use App\Http\Controllers\ContactController;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,9 +42,8 @@ Route::get('blog-details', function () {
 
 
 
-Route::get('contact', function () {
-    return view('SportClub/contact');
-})->name('contact');
+Route::get('contact', [ContactController::class, 'show'])->name('contact');
+Route::post('contact', [ContactController::class, 'store'])->middleware('throttle:5,1')->name('contact.store');
 
 
 
@@ -62,6 +63,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::patch('users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.role');
         Route::patch('users/{user}/password', [AdminUserController::class, 'resetPassword'])->name('users.password');
         Route::delete('users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+
+        // Contact page messages
+        Route::patch('messages/{message}/read', [AdminMessageController::class, 'markRead'])->name('messages.read');
+        Route::delete('messages/{message}', [AdminMessageController::class, 'destroy'])->name('messages.destroy');
     });
 });
 // ------------------------------------------------------------------------------------
@@ -78,8 +83,8 @@ Route::controller(MyReservationsController::class)->middleware('auth')->group(fu
 });
 
 Route::middleware(['auth'])->group(function(){
-Route::get('/profile/{id}', [ProfileController::class, 'index'])->name('profile');
-Route::put('/store', [ProfileController::class, 'store']);
+Route::get('/profile/{user}', [ProfileController::class, 'index'])->name('profile');
+Route::put('/store', [ProfileController::class, 'store'])->name('profile.update');
 
 Route::resource('posts', PostController::class);
 Route::resource('comment', CommentController::class);

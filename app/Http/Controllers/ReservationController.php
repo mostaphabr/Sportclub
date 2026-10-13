@@ -70,6 +70,15 @@ class ReservationController extends Controller
             return back()->withErrors(['hour' => 'Sorry, this hour was just booked by someone else. Please choose another one.'])->withInput();
         }
 
+        // Fair use: a player can only book a few hours per day (config/sportclub.php).
+        $limit = self::dailyLimitFor($request->user());
+        $alreadyBooked = self::hoursBookedOn($request->user()->id, $date);
+        if ($limit !== null && $alreadyBooked >= $limit) {
+            return back()->withErrors([
+                'hour' => "You can book at most {$limit} hours per day, and you already have {$alreadyBooked} for tomorrow.",
+            ])->withInput();
+        }
+
         $reservation = new Reservation();
         $reservation->user_id = $request->user()->id;
         $reservation->pitche_id = $pitche->id;
@@ -113,12 +122,16 @@ class ReservationController extends Controller
 
         $disponible = array_values(array_filter($slots, fn ($slot) => ! $slot['taken']));
 
+        $user = auth()->user();
+
         return view('SportClub/reservation', [
             'pitche' => $pitche,
             'slots' => $slots,
             'disponible' => $disponible,
             'playDay' => $playDay,
             'routeName' => $routeName,
+            'dailyLimit' => self::dailyLimitFor($user),
+            'hoursBooked' => self::hoursBookedOn($user->id, $playDay->toDateString()),
         ]);
     }
 
@@ -142,6 +155,20 @@ class ReservationController extends Controller
         $reservation->delete();
 
         return back()->with('message', 'The reservation has been cancelled.');
+    }
+
+    /** Max hours per day for this user, or null when there is no limit (admins). */
+    public static function dailyLimitFor($user): ?int
+    {
+        $limit = (int) config('sportclub.max_hours_per_day', 2);
+
+        return ($user && $user->isAdmin()) || $limit <= 0 ? null : $limit;
+    }
+
+    /** Hours this user has booked on a given day (each reservation is one hour). */
+    public static function hoursBookedOn(int $userId, string $date): int
+    {
+        return Reservation::where('user_id', $userId)->whereDate('date', $date)->count();
     }
 
     private function isTaken(int $pitcheId, string $date, int $debut): bool

@@ -88,7 +88,12 @@
                                 </select>
                                
                             </div>
-                            <p class="text-muted mb-4">{{ count($disponible) }} of {{ count($slots) }} hours still free for tomorrow.</p>
+                            <p class="text-muted mb-1">{{ count($disponible) }} of {{ count($slots) }} hours still free for tomorrow.</p>
+                            @if ($dailyLimit !== null && $hoursBooked < $dailyLimit)
+                                <p class="text-muted mb-4">You have booked <strong>{{ $hoursBooked }} of {{ $dailyLimit }}</strong> hours allowed per day for tomorrow.</p>
+                            @else
+                                <div class="mb-4"></div>
+                            @endif
                            @error('hour')
                            <p class="alert alert-warning">  {{$message}}</p>
                             @enderror
@@ -98,6 +103,8 @@
                           
                             @if (auth()->user()->cannot('create', App\Models\Reservation::class))
                                 <p class="alert alert-secondary text-center">Provider accounts manage terrains and can't book them.</p>
+                            @elseif ($dailyLimit !== null && $hoursBooked >= $dailyLimit)
+                                <p class="alert alert-secondary text-center">You already booked your {{ $dailyLimit }} hours for tomorrow. See <a href="{{ route('MyReservations') }}">My Reservations</a>.</p>
                             @elseif (count($disponible) > 0)
                                 <div class="text-center"><button type="submit" class="btn btn-info btn-lg ">reserve</button></div>
                             @else

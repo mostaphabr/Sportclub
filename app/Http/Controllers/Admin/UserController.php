@@ -7,7 +7,7 @@ use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
+use App\Support\Uploads;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -114,10 +114,7 @@ class UserController extends Controller
 
         $name = $user->name;
 
-        $picture = optional($user->profile)->profile_picture;
-        if ($picture && File::exists(public_path('images/profile/'.$picture))) {
-            File::delete(public_path('images/profile/'.$picture));
-        }
+        Uploads::delete('profile', optional($user->profile)->profile_picture);
 
         $user->delete();
 

@@ -94,7 +94,7 @@
 
                         <a href="{{ route('posts.show', $post->id) }}">
                             <div class="post-img">
-                                <img src={{ asset('images/post/' . $post->image) }} alt="post-image"
+                                <img src="{{ $post->imageUrl() }}" alt="post-image"
                                     class="img-fluid">
                             </div>
 
@@ -108,17 +108,12 @@
                         </a>
 
                         <div class="d-flex align-items-center">
-                            @if ($post->user->profile->profile_picture)
-                            <img src="{{ asset('images/profile/' . $post->user->profile->profile_picture) }}"
+                            <img src="{{ $post->user->avatarUrl() }}"
                                 alt="" class="img-fluid post-author-img flex-shrink-0">
-                            @else
-                            <img src="{{ asset('images/profile/Default.jpg') }}" alt=""
-                                class="img-fluid post-author-img flex-shrink-0">
-                            @endif
 
 
                             <div class="post-meta">
-                                <a href="{{ route('profile', $post->user->id) }}"
+                                <a href="{{ route('profile', $post->user) }}"
                                     class="post-author-list">{{ $post->user->name }}</a>
                                 <p class="post-date">
                                     <time datetime="2022-01-01">{{ $post->created_at }}</time>

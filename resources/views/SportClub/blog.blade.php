@@ -64,18 +64,10 @@
                         <li>Blog</li>
                     </ol>
                     <div>
-                        <a class=" m-left-2 nav-item " href="/profile/{{ auth()->user()->profile->id }}" role="button">
-
-                            @if (auth()->user()->profile->profile_picture)
-                                <img class="rounded-circle" style="width: 65px ; height:65px"
-                                    src={{ asset('images/profile/' . auth()->user()->profile->profile_picture) }}
-                                    alt="">
-                                <h5 class=" d-flex mx-auto pt-1 fw-light text-capitalize ">profile</h5>
-                            @else
-                                <img class="rounded-circle" style="width: 63px ; height:63px"
-                                    src={{ asset('images/profile/Default.jpg') }}>
-                                <h5 class=" d-flex mx-auto pt-1 fw-light text-capitalize ">profile</h5>
-                            @endif
+                        <a class=" m-left-2 nav-item " href="{{ route('profile', auth()->user()) }}" role="button">
+                            <img class="rounded-circle" style="width: 65px; height: 65px; object-fit: cover"
+                                src="{{ auth()->user()->avatarUrl() }}" alt="">
+                            <h5 class=" d-flex mx-auto pt-1 fw-light text-capitalize ">profile</h5>
                         </a>
                     </div>
 
@@ -96,7 +88,7 @@
 
                                     <a href="{{ route('posts.show', $post->id) }}">
                                         <div class="post-img">
-                                            <img src={{ asset('images/post/' . $post->image) }} alt="post-image"
+                                            <img src="{{ $post->imageUrl() }}" alt="post-image"
                                                 class="img-fluid">
                                         </div>
 
@@ -110,17 +102,12 @@
                                     </a>
 
                                     <div class="d-flex align-items-center">
-                                        @if ($post->user->profile->profile_picture)
-                                            <img src="{{ asset('images/profile/' . $post->user->profile->profile_picture) }}"
-                                                alt="" class="img-fluid post-author-img flex-shrink-0">
-                                        @else
-                                            <img src="{{ asset('images/profile/Default.jpg') }}" alt=""
-                                                class="img-fluid post-author-img flex-shrink-0">
-                                        @endif
+                                        <img src="{{ $post->user->avatarUrl() }}"
+                                            alt="" class="img-fluid post-author-img flex-shrink-0">
 
 
                                         <div class="post-meta">
-                                            <a href="{{ route('profile', $post->user->id) }}"
+                                            <a href="{{ route('profile', $post->user) }}"
                                                 class="post-author-list">{{ $post->user->name }}</a>
                                             <p class="post-date">
                                                 <time datetime="2022-01-01">{{ $post->created_at }}</time>

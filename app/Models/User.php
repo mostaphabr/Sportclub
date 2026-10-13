@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Reservation;
+use App\Support\Uploads;
 
 class User extends Authenticatable
 {
@@ -48,6 +49,12 @@ class User extends Authenticatable
 
     public function comments(){
         return $this->hasMany(Comment::class);
+    }
+
+    /** Profile picture URL (default avatar when there is none). */
+    public function avatarUrl(): string
+    {
+        return $this->profile ? $this->profile->pictureUrl() : asset(Uploads::DEFAULT_AVATAR);
     }
 
     public function isAdmin(): bool

@@ -8,6 +8,7 @@
             'users' => ['Users', 'bi-people'],
             'posts' => ['Blog posts', 'bi-journal-text'],
             'reservations' => ['Reservations', 'bi-calendar-check'],
+            'messages' => ['Messages', 'bi-envelope'],
         ];
         $roleBadge = ['admin' => 'bg-danger', 'provider' => 'bg-warning text-dark', 'user' => 'bg-secondary'];
     @endphp
@@ -51,6 +52,9 @@
                     <a class="nav-link text-nowrap {{ $tab === $key ? 'active fw-semibold' : '' }}"
                         href="{{ route('AdminDashbord.index', ['tab' => $key]) }}">
                         <i class="bi {{ $icon }}"></i> {{ $label }}
+                        @if ($key === 'messages' && $unreadMessages > 0)
+                            <span class="badge rounded-pill bg-danger">{{ $unreadMessages }}</span>
+                        @endif
                     </a>
                 </li>
             @endforeach
@@ -312,7 +316,7 @@
                     <tbody>
                         @forelse ($posts as $post)
                             <tr>
-                                <td><img src="{{ asset('images/post/' . $post->image) }}" alt="" class="rounded" style="width: 64px; height: 44px; object-fit: cover"></td>
+                                <td><img src="{{ $post->imageUrl() }}" alt="" class="rounded" style="width: 64px; height: 44px; object-fit: cover"></td>
                                 <td>
                                     <a href="{{ route('posts.show', $post->id) }}" class="fw-semibold">{{ $post->title }}</a>
                                     <div class="small text-muted">{{ \Illuminate\Support\Str::limit($post->description, 90) }}</div>
@@ -377,6 +381,49 @@
                 </table>
             </div>
             {{ $reservations->links() }}
+        @endif
+
+        {{-- ============================================================ MESSAGES --}}
+        @if ($tab === 'messages')
+            <p class="text-muted">Messages sent from the Contact page. Answer by email, then mark them as read.</p>
+            @forelse ($messages as $contact)
+                <div class="card mb-3 {{ $contact->read_at ? '' : 'border-info shadow-sm' }}">
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap justify-content-between gap-2">
+                            <div>
+                                <h3 class="h6 mb-1">
+                                    @unless ($contact->read_at)<span class="badge bg-info text-dark me-1">new</span>@endunless
+                                    {{ $contact->subject }}
+                                </h3>
+                                <div class="small text-muted">
+                                    {{ $contact->name }} · <a href="mailto:{{ $contact->email }}?subject={{ rawurlencode('Re: '.$contact->subject) }}">{{ $contact->email }}</a>
+                                    · {{ $contact->created_at?->format('d/m/Y H:i') }}
+                                    @if ($contact->user)
+                                        · <a href="{{ route('profile', $contact->user) }}">member profile</a>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="text-nowrap">
+                                <form class="d-inline" action="{{ route('admin.messages.read', $contact) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">{{ $contact->read_at ? 'Mark unread' : 'Mark read' }}</button>
+                                </form>
+                                <form class="d-inline" action="{{ route('admin.messages.destroy', $contact) }}" method="POST"
+                                    onsubmit="return confirm('Delete this message?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                        <p class="mt-2 mb-0" style="white-space: pre-line">{{ $contact->message }}</p>
+                    </div>
+                </div>
+            @empty
+                <p class="text-muted">No messages yet.</p>
+            @endforelse
+            {{ $messages->links() }}
         @endif
     </div>
 @endsection

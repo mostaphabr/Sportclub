@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Support\Uploads;
 use Illuminate\Database\Eloquent\Model;
 
 class Pitche extends Model
@@ -19,6 +20,12 @@ class Pitche extends Model
 
     public function user(){
         return $this->belongsTo(User::class);
+    }
+
+    /** URL of the pitch photo. */
+    public function imageUrl(): ?string
+    {
+        return Uploads::url('pitches', $this->image);
     }
 
     /**

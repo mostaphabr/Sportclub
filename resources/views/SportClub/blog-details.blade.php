@@ -37,7 +37,7 @@
                         <article class="blog-details">
 
                             <div class="post-img">
-                                <img src={{ asset('images/post/' . $post->image) }} alt="" class=" img-fluid">
+                                <img src="{{ $post->imageUrl() }}" alt="" class=" img-fluid">
                             </div>
 
                             <h2 class="title">
@@ -47,7 +47,7 @@
                             <div class="meta-top">
                                 <ul>
                                     <li class="d-flex align-items-center"><i class="bi bi-person"></i> <a
-                                            href="{{route('profile' ,  $post->user->id)}}">
+                                            href="{{ route('profile', $post->user) }}">
                                             {{ $post->user->name }}</a></li>
                                     <li class="d-flex align-items-center"><i class="bi bi-clock"></i> <a
                                             href="blog-details.html"><time datetime="2020-01-01">
@@ -71,8 +71,13 @@
 
                             </div><!-- End post content -->
 
+                            @can('update', $post)
+                                <a href="{{ route('posts.edit', $post) }}" class="btn btn-outline-primary mt-3">
+                                    <i class="bi bi-pencil"></i> Edit my post
+                                </a>
+                            @endcan
                             @can('delete', $post)
-                                <form action="{{ route('posts.destroy', $post) }}" method="POST" class="mt-3"
+                                <form action="{{ route('posts.destroy', $post) }}" method="POST" class="mt-3 d-inline-block"
                                     onsubmit="return confirm('Delete this post and its comments?');">
                                     @csrf
                                     @method('DELETE')
@@ -102,7 +107,7 @@
                                     <div id="comment" class="comment">
                                         <div class="d-flex">
                                             <div>
-                                                <p><a href="{{route('profile' , $comment->user->id )}}">{{ $comment->user->name }}</a> </p>
+                                                <p><a href="{{ route('profile', $comment->user) }}">{{ $comment->user->name }}</a> </p>
                                                 <time datetime="2020-01-01"
                                                     class="text-warning">{{ $comment->created_at }}</time>
                                                 <p>

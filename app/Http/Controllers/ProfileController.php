@@ -2,67 +2,65 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Profile;
-use Illuminate\Support\Str;
+use App\Models\User;
+use App\Support\Uploads;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
+    /**
+     * Public profile of a user: /profile/{user id}
+     */
+    public function index(User $user)
+    {
+        // Older accounts may have no profile row yet: create an empty one.
+        $profile = $user->profile ?? $user->profile()->save(new Profile());
+        $profile->setRelation('user', $user);
 
+        $posts = $user->posts()->latest()->get();
 
-    public function index($id){
-        $profile=Profile::where('id',$id)->with('user')->first();
-        $posts=$profile->user->posts;
-        
-
-        return view('SportClub/profile',compact('profile','posts'));
-
+        return view('SportClub/profile', compact('profile', 'posts'));
     }
 
+    /**
+     * Update the logged-in user's own profile.
+     */
+    public function store(Request $request)
+    {
+        $user = $request->user();
 
-
-    public function store(Request $request){
-        $validatedData=$request->validate([ 
-            'image'=>'image',
-            'name'=>'string',
-            'email'=>'email',
-            'bio'=>'nullable|string',
-            'phone'=>'nullable|string  ',
+        $validatedData = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'bio' => ['nullable', 'string', 'max:1000'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:4096'],
+        ], [
+            'email.unique' => 'This email is already used by another account.',
         ]);
-        
-        $user=auth()->user();
-        $user->name =$validatedData['name'] ;
-        $user->email =$validatedData['email'] ;
-        // ------------------------------
-        $profile =auth()->user()->profile ;
-        $profile->Bio=$validatedData['bio'];
-        $profile->phone_number=$validatedData['phone'];
 
-        if($request->hasFile('image')){
-            $image_name = uniqid().'-'.Str::slug( $validatedData['name']).'.'.$validatedData['image']->extension()  ;
+        $user->name = $validatedData['name'];
+        $user->email = strtolower($validatedData['email']);
 
-            if ($profile->profile_picture) {
-                $imagePath = 'images/pitches'.'/'. $profile->image;
-                if (File::exists($imagePath)) {
-                    File::delete($imagePath) ;
-                }
-            }
-            $profile->profile_picture=$image_name ;
+        $profile = $user->profile ?? new Profile();
+        $profile->Bio = $validatedData['bio'] ?? null;
+        $profile->phone_number = $validatedData['phone'] ?? null;
 
-            $validatedData['image']->move(public_path('images/profile') , $image_name);
+        if ($request->hasFile('image')) {
+            $image_name = uniqid().'-'.Str::slug($validatedData['name']).'.'.$validatedData['image']->extension();
+
+            // Remove the previous picture so old files don't pile up.
+            Uploads::delete('profile', $profile->profile_picture);
+
+            $profile->profile_picture = Uploads::store($validatedData['image'], 'profile', $image_name);
         }
-       
 
+        $user->save();
+        $user->profile()->save($profile);
 
-        $user->save(); 
-        $profile->save();
-
-        return back();
-
-
+        return back()->with('message', 'Your profile has been updated.');
     }
 }
-
-

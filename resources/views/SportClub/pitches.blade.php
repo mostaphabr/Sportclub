@@ -18,7 +18,7 @@
         <nav>
             <div class="container">
                 <ol>
-                    <li><a href="index.html">Home</a></li>
+                    <li><a href="{{ route('home') }}">Home</a></li>
                     <li>terrain</li>
                 </ol>
             </div>
@@ -94,7 +94,7 @@
                         <div>
                             <article>
                                 <div   class="post-img bg-success  d-flex   justify-content-center">
-                                    <img  style="height: 200px;" src={{ asset('images/pitches/' . $pitche->image) }} alt=""
+                                    <img  style="height: 200px;" src="{{ $pitche->imageUrl() }}" alt=""
                                         class="img-fluid w-100">
                                 </div>
                                 <p class="post-category">{{ $capacity . '  vs  ' . $capacity }}</p>

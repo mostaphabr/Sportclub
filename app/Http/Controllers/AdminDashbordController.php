@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
+use App\Models\ContactMessage;
 use App\Models\Pitche;
 use App\Models\Post;
 use App\Models\Reservation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
+use App\Support\Uploads;
 use Illuminate\Support\Str;
 
 /**
@@ -18,7 +19,7 @@ use Illuminate\Support\Str;
  */
 class AdminDashbordController extends Controller
 {
-    public const TABS = ['overview', 'pitches', 'users', 'posts', 'reservations'];
+    public const TABS = ['overview', 'pitches', 'users', 'posts', 'reservations', 'messages'];
 
     public function __construct()
     {
@@ -75,8 +76,16 @@ class AdminDashbordController extends Controller
             ->paginate(15, ['*'], 'reservations_page')
             ->withQueryString();
 
+        $messages = ContactMessage::with('user')
+            ->orderByRaw('read_at is not null')
+            ->latest()
+            ->paginate(15, ['*'], 'messages_page')
+            ->withQueryString();
+        $unreadMessages = ContactMessage::unread()->count();
+
         return view('SportClub/Dashbord', compact(
-            'tab', 'search', 'playDay', 'providers', 'stats', 'pitches', 'users', 'posts', 'reservations'
+            'tab', 'search', 'playDay', 'providers', 'stats', 'pitches', 'users', 'posts', 'reservations',
+            'messages', 'unreadMessages'
         ));
     }
 
@@ -103,7 +112,7 @@ class AdminDashbordController extends Controller
 
         $image_name = uniqid() . '-' . Str::slug($validatedData['name'], '-') . '.' . $validatedData['image']->extension();
 
-        $validatedData['image']->move(public_path('images/pitches'), $image_name);
+        Uploads::store($validatedData['image'], 'pitches', $image_name);
 
         $pitche = new Pitche;
         $pitche->name = $validatedData['name'];
@@ -160,12 +169,8 @@ class AdminDashbordController extends Controller
         if ($request->hasFile('image')) {
             $image_name = uniqid() . "-" . Str::slug($validatedData['name'], '-') . '.' . $validatedData['image']->extension();
 
-            $imagePath = public_path('images/pitches/'.$pitche->image);
-
-            if ($pitche->image && File::exists($imagePath)) {
-                File::delete($imagePath);
-            }
-            $validatedData['image']->move(public_path('images/pitches'), $image_name);
+            Uploads::delete('pitches', $pitche->image);
+            Uploads::store($validatedData['image'], 'pitches', $image_name);
 
             $pitche->image = $image_name;
         }
@@ -180,10 +185,7 @@ class AdminDashbordController extends Controller
         try {
             $pitche = Pitche::findOrFail($id);
 
-            $imagePath = public_path('images/pitches/'.$pitche->image);
-            if ($pitche->image && File::exists($imagePath)) {
-                File::delete($imagePath);
-            }
+            Uploads::delete('pitches', $pitche->image);
 
             $pitche->delete(); // its reservations are removed too (cascade)
 

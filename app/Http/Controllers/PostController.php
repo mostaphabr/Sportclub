@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
-use Illuminate\Support\Str;
+use App\Support\Uploads;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class PostController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Blog: all posts, newest first.
      */
     public function index()
     {
@@ -19,23 +19,20 @@ class PostController extends Controller
         return view('SportClub.blog',compact('posts'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return redirect()->route('posts.index');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Publish a post.
      */
     public function store(Request $request)
     {
         $validatedData=$request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:6048',
-            'title' => 'required|string',
-            'description' => 'required|string',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:6048',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|max:5000',
         ]);
         $post= new Post ;
 
@@ -43,60 +40,69 @@ class PostController extends Controller
         $post->title = $validatedData['title'];
         $post->description = $validatedData['description'];
 
+        $image_name = uniqid().'-'.Str::slug($validatedData['title']).'.'.$validatedData['image']->extension();
+        $post->image = Uploads::store($validatedData['image'], 'post', $image_name);
 
-        if($request->hasFile('image')){
-            $image_name = uniqid().'-'.Str::slug( $validatedData['title']).'.'.$validatedData['image']->extension()  ;
-
-            $post->image=$image_name ;
-            $validatedData['image']->move(public_path('images/post') , $image_name);
-          
-        }
-        
-       
         $post->save();
         return back()->with('message' , 'post has been published');
-
     }
 
     /**
-     * Display the specified resource.
+     * One post with its comments.
      */
     public function show( $id)
     {
         $post = Post::with(['user.profile', 'comments.user'])->findOrFail($id);
-        
+
         return view('SportClub/blog-details' , compact('post'));
-
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Edit form (author only).
      */
-    public function edit( $id)
+    public function edit(Post $post)
     {
-        //
+        $this->authorize('update', $post);
+
+        return view('SportClub/post-edit', compact('post'));
     }
 
     /**
-     * Update the specified resource in storage.
+     * Save changes to a post (author only). The image is optional: keep the old one if none is sent.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Post $post)
     {
-        //
+        $this->authorize('update', $post);
+
+        $validatedData = $request->validate([
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:6048',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|max:5000',
+        ]);
+
+        $post->title = $validatedData['title'];
+        $post->description = $validatedData['description'];
+
+        if ($request->hasFile('image')) {
+            $image_name = uniqid().'-'.Str::slug($validatedData['title']).'.'.$validatedData['image']->extension();
+
+            Uploads::delete('post', $post->image);
+            $post->image = Uploads::store($validatedData['image'], 'post', $image_name);
+        }
+
+        $post->save();
+
+        return redirect()->route('posts.show', $post->id)->with('message', 'Your post has been updated.');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete a post: admins can remove any post (moderation); authors can remove their own.
      */
     public function destroy(Post $post)
     {
-        // Admins can remove any post (moderation); authors can remove their own.
         $this->authorize('delete', $post);
 
-        $imagePath = public_path('images/post/'.$post->image);
-        if ($post->image && File::exists($imagePath)) {
-            File::delete($imagePath);
-        }
+        Uploads::delete('post', $post->image);
 
         $title = $post->title;
         $post->delete(); // comments are removed too (cascade)
