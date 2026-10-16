@@ -13,9 +13,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        // Tests never read or delete real uploaded images:
-        // a fake "public" disk and an empty temporary legacy folder.
+        // Tests never read or delete real uploaded images: use a fake "public" disk.
         Storage::fake('public');
-        config(['sportclub.legacy_uploads_path' => storage_path('framework/testing/no-legacy-uploads')]);
     }
 }

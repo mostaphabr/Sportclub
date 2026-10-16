@@ -2,7 +2,14 @@
 
 
 @section('content')
-<section id="hero" class="hero">
+<section id="hero" class="hero hero-video">
+    {{-- Background video (muted + playsinline so phones autoplay it) --}}
+    <video class="hero-video-bg" autoplay muted loop playsinline preload="metadata"
+           poster="{{ asset('SportClub/assets/img/hero-poster.jpg') }}" aria-hidden="true">
+        <source src="{{ asset('SportClub/assets/img/hero-video.mp4') }}" type="video/mp4">
+    </video>
+    <div class="hero-video-overlay"></div>
+
     <div class="container position-relative">
         <div class="row gy-5" data-aos="fade-in">
             <div class="col-lg-6 order-2 order-lg-1 d-flex flex-column justify-content-center text-center text-lg-start">

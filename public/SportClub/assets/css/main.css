@@ -2666,3 +2666,30 @@ section {
 .footer .credits a {
   color: #fff;
 }
+/* Home hero with background video */
+.hero.hero-video {
+  overflow: hidden;
+  background: #0b1a12;
+}
+.hero-video-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.hero-video-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.35) 50%, rgba(0, 0, 0, 0.7) 100%);
+  z-index: 1;
+}
+.hero.hero-video > .container,
+.hero.hero-video > .icon-boxes {
+  z-index: 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-video-bg { display: none; }
+  .hero.hero-video { background: #0b1a12 url("../img/hero-poster.jpg") center / cover no-repeat; }
+}

@@ -71,7 +71,6 @@ After pulling new code:
 composer install
 php artisan migrate
 php artisan storage:link              # once
-php artisan sportclub:move-uploads    # once: moves old images from public/images to storage
 ```
 
 ## Configuration

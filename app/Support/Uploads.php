@@ -9,11 +9,8 @@ use Illuminate\Support\Facades\Storage;
 /**
  * One place that knows where uploaded images live.
  *
- * Folders: "pitches", "post", "profile". The database only stores the file name.
- *
- * New uploads are saved in storage/app/public/{folder} (not in Git).
- * Older uploads still in public/images/{folder} keep working, and
- * `php artisan sportclub:move-uploads` moves them to storage.
+ * Folders: "pitches", "post", "profile". The database only stores the file name,
+ * the file itself is saved in storage/app/public/{folder} (not in Git).
  */
 class Uploads
 {
@@ -29,11 +26,6 @@ class Uploads
         }
 
         $file = basename($file);
-
-        // Old location (before uploads moved to storage)
-        if (! self::disk()->exists("{$folder}/{$file}") && File::exists(self::legacyPath($folder, $file))) {
-            return asset("images/{$folder}/{$file}");
-        }
 
         // `php artisan storage:link` makes storage/app/public available at /storage
         if (File::exists(public_path('storage'))) {
@@ -53,26 +45,12 @@ class Uploads
         return $name;
     }
 
-    /** Delete an uploaded file wherever it is. */
+    /** Delete an uploaded file. */
     public static function delete(string $folder, ?string $file): void
     {
-        if (! $file) {
-            return;
+        if ($file) {
+            self::disk()->delete($folder.'/'.basename($file));
         }
-
-        $file = basename($file);
-        self::disk()->delete("{$folder}/{$file}");
-
-        if (File::exists(self::legacyPath($folder, $file))) {
-            File::delete(self::legacyPath($folder, $file));
-        }
-    }
-
-    public static function legacyPath(string $folder, string $file = ''): string
-    {
-        $root = rtrim(config('sportclub.legacy_uploads_path', public_path('images')), '/\\');
-
-        return $root.DIRECTORY_SEPARATOR.$folder.($file !== '' ? DIRECTORY_SEPARATOR.basename($file) : '');
     }
 
     public static function disk()
